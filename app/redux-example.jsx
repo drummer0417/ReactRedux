@@ -1,4 +1,5 @@
 var redux = require('redux');
+var axios = require('axios');
 
 console.log('starting redux-example ');
 
@@ -91,10 +92,59 @@ var removeMovie = ((id) => {
   }
 });
 
+// -----------------------------------
+// map reducer and aciton generators
+var mapReducer = (state = {isFetching: false, url:undefined}, action) => {
+  switch (action.type) {
+    case 'START_LOCATION_FETCH':
+    console.log('in case START_LOCATION_FETCH');
+      return {
+        isFetching: true,
+        url: undefined
+      }
+    case 'COMPLETE_LOCATION_FETCH':
+      return {
+        isFetching: false,
+        url: action.url
+      }
+    default:
+      return state;
+  }
+};
+var startLocationFetch = () => {
+  return {
+    type: 'START_LOCATION_FETCH'
+  }
+}
+
+var completeLocationFetch = (url) => {
+  return {
+    type: 'COMPLETE_LOCATION_FETCH',
+    url
+  }
+}
+
+var fetchLocation = () => {
+
+  // call action generater startLocationFetch
+  store.dispatch(startLocationFetch());
+
+  axios.get('http://ipinfo.io').then(( res) =>{
+
+    var url = 'http://maps.google.com?q=';
+    var location = res.data.loc;
+    console.log('afer call axios, url: ' + url + location);
+    // call action generater completeLocationFetch
+    store.dispatch(completeLocationFetch(url + location));
+  });
+};
+// -----------------------------------
+
 var reducer = redux.combineReducers({
   name: nameReducer,
   hobbies: hobbiesReducer,
-  movies: movieReducer
+  movies: movieReducer,
+  map: mapReducer
 });
 
 var store = redux.createStore(reducer, redux.compose(
@@ -103,22 +153,30 @@ var store = redux.createStore(reducer, redux.compose(
 
 console.log('initialState: ' + JSON.stringify(store.getState()));
 
+fetchLocation();
+
 var unsubscribe = store.subscribe(() =>{
   var state = store.getState();
-  console.log('newState: ' + JSON.stringify(state));
-  document.getElementById('app').innerHTML = JSON.stringify(state);
+  console.log('state: ' + JSON.stringify(state, undefined, 2));
+
+  if (state.map.isFetching) {
+    document.getElementById('app').innerHTML = "Loading...";
+  } else if (state.map.url){
+    document.getElementById('app').innerHTML = "<br/><a href='" + state.map.url + " ' target='_blank'>This is your IP's location</a>";
+  }
+
 })
  // unsubscribe();
 
 store.dispatch(changeName('Hans'));
-store.dispatch(changeName('Jacky'));
-
-store.dispatch(addHobby('Playing drums'));
-store.dispatch(addHobby('Running'));
-store.dispatch(addHobby('Biking'));
-store.dispatch(removeHobby(2));
-
-store.dispatch(addMovie({title: 'Star Wars', genre: 'Science Fiction'}));
-store.dispatch(addMovie({title: 'Flodder', genre: 'comedy'}));
-store.dispatch(addMovie({title: 'Kill Bill', genre: 'Thriller'}));
-store.dispatch(removeMovie(2));
+// store.dispatch(changeName('Jacky'));
+//
+// store.dispatch(addHobby('Playing drums'));
+// store.dispatch(addHobby('Running'));
+// store.dispatch(addHobby('Biking'));
+// store.dispatch(removeHobby(2));
+//
+// store.dispatch(addMovie({title: 'Star Wars', genre: 'Science Fiction'}));
+// store.dispatch(addMovie({title: 'Flodder', genre: 'comedy'}));
+// store.dispatch(addMovie({title: 'Kill Bill', genre: 'Thriller'}));
+// store.dispatch(removeMovie(2));
