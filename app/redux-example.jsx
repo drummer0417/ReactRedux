@@ -1,5 +1,8 @@
 var redux = require('redux');
-var axios = require('axios');
+// var axios = require('axios');
+
+var actions = require('./actions/index');
+var store = require('./store/configureStore').configure();
 
 console.log('starting redux-example ');
 
@@ -11,156 +14,34 @@ console.log('starting redux-example ');
 //  * not allowed to update values of objects passed in (parms)
 //
 
-// ----------------------------------
-// name reducer and action generators
-var nameReducer = (state = 'Anonymous', action) => {
-  switch (action.type) {
-    case 'CHANGE_NAME':
-      return action.name;
-      break;
-    default:
-      return state;
-  }
-};
-var changeName = ((name) => {
-  return {
-    type: 'CHANGE_NAME',
-    name
-  }
-})
-
 // -----------------------------------
-// hobby reducer and action generators
-var nextHobbyId = 1;
-var hobbiesReducer = (hobbies = [], action) => {
-
-  switch (action.type) {
-    case 'ADD_HOBBY':
-      return [...hobbies,
-            {
-              id: nextHobbyId++,
-              hobby: action.hobby
-            }
-        ];
-      break;
-    case 'REMOVE_HOBBY':
-      return hobbies.filter((hobby) => hobby.id !== action.id)
-      break;
-    default:
-      return hobbies;
-  }
-};
-var addHobby = ((hobby) => {
-  return {
-    type: 'ADD_HOBBY',
-    hobby
-  }
-});
-var removeHobby = ((id) => {
-  return {
-    type: 'REMOVE_HOBBY',
-    id
-  }
-});
-
-// -----------------------------------
-// movie reducer and aciton generators
-var nextMovieId = 1;
-var movieReducer = (state = [], action) => {
-  switch (action.type) {
-    case 'ADD_MOVIE':
-      action.movie.id = nextMovieId++;
-      return [...state, action.movie]
-      break;
-    case 'REMOVE_MOVIE':
-      return state.filter((movie) => movie.id !== action.id);
-      break;
-    default:
-      return state;
-  }
-};
-var addMovie = ((movie) => {
-  return {
-    type: 'ADD_MOVIE',
-    movie
-  }
-});
-var removeMovie = ((id) => {
-  return {
-    type: 'REMOVE_MOVIE',
-    id
-  }
-});
-
-// -----------------------------------
-// map reducer and aciton generators
-var mapReducer = (state = {isFetching: false, url:undefined}, action) => {
-  switch (action.type) {
-    case 'START_LOCATION_FETCH':
-    console.log('in case START_LOCATION_FETCH');
-      return {
-        isFetching: true,
-        url: undefined
-      }
-    case 'COMPLETE_LOCATION_FETCH':
-      return {
-        isFetching: false,
-        url: action.url
-      }
-    default:
-      return state;
-  }
-};
-var startLocationFetch = () => {
-  return {
-    type: 'START_LOCATION_FETCH'
-  }
-}
-
-var completeLocationFetch = (url) => {
-  return {
-    type: 'COMPLETE_LOCATION_FETCH',
-    url
-  }
-}
-
-var fetchLocation = () => {
-
-  // call action generater startLocationFetch
-  store.dispatch(startLocationFetch());
-
-  axios.get('http://ipinfo.io').then(( res) =>{
-
-    var url = 'http://maps.google.com?q=';
-    var location = res.data.loc;
-    console.log('afer call axios, url: ' + url + location);
-    // call action generater completeLocationFetch
-    store.dispatch(completeLocationFetch(url + location));
-  });
-};
-// -----------------------------------
-
-var reducer = redux.combineReducers({
-  name: nameReducer,
-  hobbies: hobbiesReducer,
-  movies: movieReducer,
-  map: mapReducer
-});
-
-var store = redux.createStore(reducer, redux.compose(
-  window.devToolsExtension ? window.devToolsExtension(): f => f
-));
 
 console.log('initialState: ' + JSON.stringify(store.getState()));
 
-fetchLocation();
+// var fetchLocation = () => {
+//
+//    // call action generater startLocationFetch
+//    store.dispatch(actions.startLocationFetch());
+//
+//    axios.get('http://ipinfo.io').then(( res) =>{
+//
+//      var url = 'http://maps.google.com?q=';
+//      var location = res.data.loc;
+//      console.log('afer call axios, url: ' + url + location);
+//      // call action generater completeLocationFetch
+//      store.dispatch(actions.completeLocationFetch(url + location));
+//    });
+//  }
+
+// fetchLocation();
+store.dispatch(actions.fetchLocation());
 
 var unsubscribe = store.subscribe(() =>{
   var state = store.getState();
   console.log('state: ' + JSON.stringify(state, undefined, 2));
 
   if (state.map.isFetching) {
-    document.getElementById('app').innerHTML = "Loading...";
+    document.getElementById('app').innerHTML = "<br/><p>Loading...</p>";
   } else if (state.map.url){
     document.getElementById('app').innerHTML = "<br/><a href='" + state.map.url + " ' target='_blank'>This is your IP's location</a>";
   }
@@ -168,15 +49,15 @@ var unsubscribe = store.subscribe(() =>{
 })
  // unsubscribe();
 
-store.dispatch(changeName('Hans'));
-// store.dispatch(changeName('Jacky'));
-//
-// store.dispatch(addHobby('Playing drums'));
-// store.dispatch(addHobby('Running'));
-// store.dispatch(addHobby('Biking'));
-// store.dispatch(removeHobby(2));
-//
-// store.dispatch(addMovie({title: 'Star Wars', genre: 'Science Fiction'}));
-// store.dispatch(addMovie({title: 'Flodder', genre: 'comedy'}));
-// store.dispatch(addMovie({title: 'Kill Bill', genre: 'Thriller'}));
-// store.dispatch(removeMovie(2));
+store.dispatch(actions.changeName('Hans'));
+store.dispatch(actions.changeName('Jacky'));
+
+store.dispatch(actions.addHobby('Playing drums'));
+store.dispatch(actions.addHobby('Running'));
+store.dispatch(actions.addHobby('Biking'));
+store.dispatch(actions.removeHobby(2));
+
+store.dispatch(actions.addMovie({title: 'Star Wars', genre: 'Science Fiction'}));
+store.dispatch(actions.addMovie({title: 'Flodder', genre: 'comedy'}));
+store.dispatch(actions.addMovie({title: 'Kill Bill', genre: 'Thriller'}));
+store.dispatch(actions.removeMovie(2));
